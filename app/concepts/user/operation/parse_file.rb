@@ -32,23 +32,31 @@ module User::Operation
     end
 
     def error_in_conversion(ctx, **)
-      p "Error in conversion"
+      return true if JSON.parse ctx[:file_json]
+
+      p "Error in conversion #{ctx[:file_read]}"
     end
 
     def validate_json(ctx, **)
       p "Check for errors"
       # check for error in age > 18
       # Check for email format
-      true
+      json_data = JSON.parse(ctx[:file_json])
+      age = DateTime.parse(json_data["dob"])
+      p age = Time.now.year - age.year
+      parsed_email = json_data["email"]
+      ctx[:age] = age
+      ctx[:email] = parsed_email
+      age > 18 && URI::MailTo::EMAIL_REGEXP.match?(parsed_email)
     end
 
     def validate_json_error(ctx, **)
-      p "JSON Data validation error"
+      p "JSON Data validation error #{ctx[:file_read]}"
     end
 
     def dump_data(ctx, **)
       puts "Data dump successfull."
-      User.create(name: "jdjd", email: "abc@email.com")
+      User.create(name: ctx[:file_read][:name], age: ctx[:age], email: ctx[:email])
     end
   end
 end
